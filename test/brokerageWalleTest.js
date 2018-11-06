@@ -4,11 +4,32 @@ const BrokerageWalletContract = artifacts.require("BrokerageWallet");
 contract("BrokerageWallet", (accounts) => {
   beforeEach(async function() {
     this.brokerageWalletContract = await BrokerageWalletContract.deployed();
+    this.erc20TokenAddress = "0xeee3598e2c3108c331c712ab4ce614f408f02538";
   });
 
   describe("deposit(address _token, uint256 _amount)", ()=>{
-    it("credit the investors balance for the token")
-    it("emit transfer event from ERC20")
+    beforeEach(async function() {
+      this.depositAmount = 100;
+    });
+
+    it("credit the investors balance for the token", async function () {
+      await this.brokerageWalletContract.deposit(this.erc20TokenAddress, this.depositAmount, { from: accounts[0] });
+
+      const tokenUserBalance = await this.brokerageWalletContract.ledger(
+        this.erc20TokenAddress,
+        accounts[0],
+      );
+
+      assert.equal(tokenUserBalance.toNumber(), this.depositAmount);
+    });
+
+    it("emits a LogDeposit event", async function () {
+      await this.brokerageWalletContract.deposit(this.erc20TokenAddress, this.depositAmount).then(async (result) => {
+        truffleAssert.eventEmitted(result, 'LogDeposit', (ev) => {
+          return ev._token === this.erc20TokenAddress && ev._investor === accounts[0] && ev._amount.toNumber() === this.depositAmount;
+        });
+      });
+    });
   });
 
   describe("toggleApprover(address _approver)", () => {

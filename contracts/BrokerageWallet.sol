@@ -37,14 +37,14 @@ contract BrokerageWallet is Ownable {
     // ~~~~~~~~~~~~ //
 
     function deposit(address _token, uint256 _amount) public {
-        ledger[_token][msg.sender].add(_amount);
-        IERC20 token = IERC20(_token);
+        ledger[_token][msg.sender] += _amount;
+        // IERC20 token = IERC20(_token);
 
-        if (token.transfer(address(this), _amount)) {
-            emit LogDeposit(_token, msg.sender, _amount);
-        } else {
-            emit LogDepositFail(_token, msg.sender, _amount);
-        }
+        // if (token.transfer(address(this), _amount)) {
+        emit LogDeposit(_token, msg.sender, _amount);
+        // } else {
+        //     emit LogDepositFail(_token, msg.sender, _amount);
+        // }
     }
 
     // function offerTokens(address token, uint256 amount);
