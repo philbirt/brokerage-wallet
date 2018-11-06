@@ -1,11 +1,12 @@
 pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 /**
  * Sometimes it is useful for a contract to own tokens on behalf of users.
  */
-contract BrokerageWallet {
+contract BrokerageWallet is Ownable {
     using SafeMath for uint;
 
     /** Contract administrator */
@@ -28,11 +29,6 @@ contract BrokerageWallet {
 
     modifier onlyApprover {
         require(approvers[msg.sender], "This action is only for approvers");
-        _;
-    }
-
-    modifier onlyAdmin {
-        require(msg.sender == admin, "This action is only for the administrator");
         _;
     }
 
@@ -61,8 +57,6 @@ contract BrokerageWallet {
 
     // function approveWithdrawals(uint256 begin, uint256 end) onlyApprover;
     // function toggleSigner(address signer) onlyAdmin;
-    // function changeAdmin(address newAdmin) onlyAdmin;
-
 }
 
 // Questions 

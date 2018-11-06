@@ -29,6 +29,7 @@
   "devDependencies": {
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.12.2",
-    "truffle": "^4.1.14"
+    "truffle": "^4.1.14",
+    "truffle-assertions": "^0.6.3"
   }
 }
