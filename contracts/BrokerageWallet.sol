@@ -56,7 +56,13 @@ contract BrokerageWallet is Ownable {
     // ~~~~~~~~~~~~~~ //
 
     // function approveWithdrawals(uint256 begin, uint256 end) onlyApprover;
-    // function toggleSigner(address signer) onlyAdmin;
+    function toggleApprover(address _approver) public onlyOwner {
+        if (approvers[_approver]) {
+            approvers[_approver] = false;
+        } else {
+            approvers[_approver] = true;
+        }
+    }
 }
 
 // Questions 

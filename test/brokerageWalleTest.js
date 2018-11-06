@@ -11,6 +11,34 @@ contract("BrokerageWallet", (accounts) => {
     it("emit transfer event from ERC20")
   });
 
+  describe("toggleApprover(address _approver)", () => {
+    it("adds approver if not currently in the mapping", async function () {
+      const emptyApprover = await this.brokerageWalletContract.approvers(accounts[1]);
+      assert.equal(emptyApprover, false);
+
+      await this.brokerageWalletContract.toggleApprover(accounts[1]);
+      const newApprover = await this.brokerageWalletContract.approvers(accounts[1]);
+      assert.equal(newApprover, true);
+    });
+
+    it("removes approver if its already in the mapping", async function () {
+      const emptyApprover = await this.brokerageWalletContract.approvers(accounts[1]);
+      assert.equal(emptyApprover, true);
+
+      await this.brokerageWalletContract.toggleApprover(accounts[1]);
+      const newApprover = await this.brokerageWalletContract.approvers(accounts[1]);
+      assert.equal(newApprover, false);
+    });
+
+    context("when called by non-owner", async function () {
+      it("raises an exception and does not toggle the approver", async function () {
+        await truffleAssert.fails(
+          this.brokerageWalletContract.toggleApprover.call(accounts[1], { from: accounts[1] })
+        );
+      });
+    });
+  });
+
   describe("transferOwnership(address newOwner)", () => {
     afterEach(async function() {
       const currentOwner = await this.brokerageWalletContract.owner();
