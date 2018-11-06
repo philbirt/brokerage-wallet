@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 /**
  * Sometimes it is useful for a contract to own tokens on behalf of users.
  */
@@ -37,14 +37,13 @@ contract BrokerageWallet is Ownable {
     // ~~~~~~~~~~~~ //
 
     function deposit(address _token, uint256 _amount) public {
-        ledger[_token][msg.sender] += _amount;
-        // IERC20 token = IERC20(_token);
+        uint balance = ledger[_token][msg.sender];
+        ledger[_token][msg.sender] = balance.add(_amount);
 
-        // if (token.transfer(address(this), _amount)) {
+        ERC20 token = ERC20(_token);
+        token.transferFrom(msg.sender, address(this), _amount);
+
         emit LogDeposit(_token, msg.sender, _amount);
-        // } else {
-        //     emit LogDepositFail(_token, msg.sender, _amount);
-        // }
     }
 
     // function offerTokens(address token, uint256 amount);
