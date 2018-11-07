@@ -75,8 +75,8 @@ contract BrokerageWallet is Ownable {
     */
     function withdraw(address _token, uint256 _amount) public {
         // TODO: Another data structure to iterate over approvers
-        for (uint i = 0; i < approvers.length; i++) {
-            address approverAddress = approvers[i];
+        for (uint i = 0; i < approverAddresses.length; i++) {
+            address approverAddress = approverAddresses[i];
             WithdrawalRequest memory request = WithdrawalRequest(msg.sender, _token, _amount, false);
             approverRequests[approverAddress].push(request);
         }
@@ -92,7 +92,7 @@ contract BrokerageWallet is Ownable {
     * @param _begin the starting index of requests to approve
     * @param _end the ending index of requests to approve
     */
-    function approveWithdrawals(uint256 _begin, uint256 _end) onlyApprover {
+    function approveWithdrawals(uint256 _begin, uint256 _end) public onlyApprover {
         WithdrawalRequest[] storage requests = approverRequests[msg.sender];
 
         for (uint i = _begin; i < _end; i++) {
