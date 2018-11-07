@@ -166,8 +166,14 @@ contract("BrokerageWallet", (accounts) => {
   })
 
   describe("addApprover(address _address)", () => {
-    it("adds address to approvers")
+    it("adds address to approvers and set to true")
     it("adds address to approverAddresses")
     it("emits LogAddApprover event")
+  });
+
+  describe("removeApprover(address _approver)", () => {
+    it("sets approver address to false")
+    it("removes address from approverAddresses")
+    it("emits LogRemoveApprover event")
   });
 });
