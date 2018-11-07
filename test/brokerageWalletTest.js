@@ -164,4 +164,10 @@ contract("BrokerageWallet", (accounts) => {
       });
     });
   })
+
+  describe("addApprover(address _address)", () => {
+    it("adds address to approvers")
+    it("adds address to approverAddresses")
+    it("emits LogAddApprover event")
+  });
 });
