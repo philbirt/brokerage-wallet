@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+ pragma solidity ^0.4.24;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -9,6 +9,15 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 contract BrokerageWallet is Ownable {
     using SafeMath for uint;
 
+    uint8 constant public APPROVAL_THRESHOLD = 3;
+
+    struct WithdrawalRequest {
+        address investor;
+        address token;
+        uint256 amount;
+        bool approved;
+    }
+
     /** Contract administrator */
     address public admin;
 
@@ -18,6 +27,8 @@ contract BrokerageWallet is Ownable {
     /** balance registry */
     /** tokenAddress => investorAddress => balance */
     mapping(address => mapping(address => uint256)) public ledger;
+
+    mapping(address => WithdrawalRequest[]) public approverRequests;
 
     /** logging deposit or their failure */
     event LogDeposit(address indexed _token, address indexed _investor, uint _amount);
@@ -36,6 +47,12 @@ contract BrokerageWallet is Ownable {
     // End user API //
     // ~~~~~~~~~~~~ //
 
+    /**
+    * @dev Deposits a certain amount of ERC20 token into the brokerage wallet
+    *
+    * @param _token the ERC20 token address
+    * @param _amount the amount of ERC20 to deposit
+    */
     function deposit(address _token, uint256 _amount) public {
         uint balance = ledger[_token][msg.sender];
         ledger[_token][msg.sender] = balance.add(_amount);
@@ -47,14 +64,47 @@ contract BrokerageWallet is Ownable {
     }
 
     // function offerTokens(address token, uint256 amount);
-    // function transfer(address token, address src, address dst, uint256 amount);
-    // function withdraw(address token, uint256 amount);
+    // function transfer(address token, address src, address dst, uint256 amount) onlyOwner;
+
+    /**
+    * @dev Requests a withdrawal of a certain amount of an ERC20 token for a particular investor
+    *
+    * @param _token the ERC20 token address
+    * @param _amount the desired amount of ERC20 to withdraw
+    */
+    function withdraw(address _token, uint256 _amount) public {
+        // TODO: Another data structure to iterate over approvers
+        for (uint i = 0; i < approvers.length; i++) {
+            address approverAddress = approvers[i];
+            WithdrawalRequest memory request = WithdrawalRequest(msg.sender, _token, _amount, false);
+            approverRequests[approverAddress].push(request);
+        }
+    }
 
     // ~~~~~~~~~~~~~~ //
     // Administration //
     // ~~~~~~~~~~~~~~ //
 
-    // function approveWithdrawals(uint256 begin, uint256 end) onlyApprover;
+    /**
+    * @dev Approves a list of withdrawal requests, if threshold is met, also transfers tokens
+    *
+    * @param _begin the starting index of requests to approve
+    * @param _end the ending index of requests to approve
+    */
+    function approveWithdrawals(uint256 _begin, uint256 _end) onlyApprover {
+        WithdrawalRequest[] storage requests = approverRequests[msg.sender];
+
+        for (uint i = _begin; i < _end; i++) {
+            WithdrawalRequest storage request = requests[i];
+            request.approved = true;
+        }
+    }
+
+    /**
+    * @dev Toggles an approver address to be active/inactive
+    *
+    * @param _approver the approver address to toggle
+    */
     function toggleApprover(address _approver) public onlyOwner {
         if (approvers[_approver]) {
             approvers[_approver] = false;

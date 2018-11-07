@@ -78,6 +78,30 @@ contract("BrokerageWallet", (accounts) => {
 
   });
 
+  describe("withdraw(address token, uint256 amount)", () => {
+    it("creates a withdrawal request for each approver", async function() {
+
+    });
+  });
+
+  describe("approveWithdrawals(uint256 begin, uint256 end)", () => {
+    context("called by an approver", async function() {
+      it("sets the withdrawal requests to approved", async function() {
+
+      });
+
+      context("the approval threshold has been met", async function() {
+
+      });
+    });
+
+    context("not called by an approver", async function() {
+      it("does not modify the approval totals", async function() {
+
+      });
+    });
+  });
+
   describe("toggleApprover(address _approver)", () => {
     it("adds approver if not currently in the mapping", async function () {
       const emptyApprover = await this.brokerageWalletContract.approvers(accounts[1]);
