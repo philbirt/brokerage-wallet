@@ -23,6 +23,7 @@ contract BrokerageWallet is Ownable {
 
     /** The active signers */
     mapping(address => bool) public approvers;
+    address[] public approverAddresses;
 
     /** balance registry */
     /** tokenAddress => investorAddress => balance */
@@ -110,6 +111,37 @@ contract BrokerageWallet is Ownable {
             approvers[_approver] = false;
         } else {
             approvers[_approver] = true;
+        }
+    }
+
+    /**
+    * @dev add approver address to the list
+    *
+    * @param _approver the approvers address
+    */
+    function addApprover(address _approver) public onlyOwner {
+        uint currentLength = approverAddresses.length;
+        approverAddresses.length = currentLength + 1;
+        
+        approverAddresses[currentLength] = _approver;
+        approvers[_approver] = true;
+    }
+
+    /**
+    * @dev remove approver address from the list
+    *
+    * @param _approver the approver address to remove
+    */
+    function removeApprover(address _approver) public onlyOwner {
+        for (uint256 i = 0; i < approverAddresses.length; i++) {
+            if (approverAddresses[i] == _approver) {
+                uint256 newLength = approverAddresses.length - 1;
+                approverAddresses[i] = approverAddresses[newLength];
+                approvers[_approver] = false;
+            
+                approverAddresses.length = newLength;
+                break;
+            }
         }
     }
 }
