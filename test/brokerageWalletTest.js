@@ -196,7 +196,7 @@ contract("BrokerageWallet", (accounts) => {
       assert.equal(newApprover, false);
     });
 
-    it("removes address to approverAddresses", async function (){
+    it("removes address from approverAddresses", async function (){
       const approver = await this.brokerageWalletContract.approvers(accounts[1]);
       assert.equal(approver, true);
 
@@ -217,7 +217,6 @@ contract("BrokerageWallet", (accounts) => {
     });
 
     it("emits LogRemoveApprover event", async function (){
-      await this.brokerageWalletContract.addApprover(accounts[1]);
       this.brokerageWalletContract.removeApprover(accounts[1]).then((result) => {
         truffleAssert.eventEmitted(result, 'LogApproverRemoved', (ev) => {
           return ev._approver == accounts[1];
