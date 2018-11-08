@@ -12,6 +12,14 @@ contract("BrokerageWallet", (accounts) => {
     this.erc20TokenAddress = this.erc20Token.address;
 
     this.erc20Token.transfer(this.investor, 1000);
+
+    this.approver1 = accounts[8];
+    this.approver2 = accounts[9];
+    this.approver3 = accounts[10];
+
+    await this.brokerageWalletContract.addApprover(this.approver1);
+    await this.brokerageWalletContract.addApprover(this.approver2);
+    await this.brokerageWalletContract.addApprover(this.approver3);
   });
 
   describe("deposit(address _token, uint256 _amount)", ()=>{
@@ -78,9 +86,34 @@ contract("BrokerageWallet", (accounts) => {
 
   });
 
-  describe("withdraw(address token, uint256 amount)", () => {
-    it("creates a withdrawal request for each approver", async function() {
+  describe("requestWithdrawal(address token, uint256 amount)", () => {
+    beforeEach(async function() {
+      this.depositAmount = 100;
 
+      await this.erc20Token.increaseAllowance(this.brokerageWalletContract.address, this.depositAmount, { from: this.investor });
+      await this.brokerageWalletContract.deposit(this.erc20TokenAddress, this.depositAmount, { from: this.investor });
+    });
+
+    it("creates a withdrawal request for each approver", async function() {
+      await this.brokerageWalletContract.requestWithdrawal(this.erc20TokenAddress, this.depositAmount, { from: this.investor });
+
+      const withdrawalRequest1 = await this.brokerageWalletContract.approverRequests(this.approver1, 0);
+      assert.equal(withdrawalRequest1[0], this.investor);
+      assert.equal(withdrawalRequest1[1], this.erc20TokenAddress);
+      assert.equal(withdrawalRequest1[2], this.depositAmount);
+      assert.equal(withdrawalRequest1[3], 0);
+
+      const withdrawalRequest2 = await this.brokerageWalletContract.approverRequests(this.approver2, 0);
+      assert.equal(withdrawalRequest2[0], this.investor);
+      assert.equal(withdrawalRequest2[1], this.erc20TokenAddress);
+      assert.equal(withdrawalRequest2[2], this.depositAmount);
+      assert.equal(withdrawalRequest2[3], 0);
+
+      const withdrawalRequest3 = await this.brokerageWalletContract.approverRequests(this.approver3, 0);
+      assert.equal(withdrawalRequest3[0], this.investor);
+      assert.equal(withdrawalRequest3[1], this.erc20TokenAddress);
+      assert.equal(withdrawalRequest3[2], this.depositAmount);
+      assert.equal(withdrawalRequest3[3], 0);
     });
   });
 
@@ -102,30 +135,60 @@ contract("BrokerageWallet", (accounts) => {
     });
   });
 
-  describe("toggleApprover(address _approver)", () => {
+  describe("addApprover(address _approver)", () => {
     it("adds approver if not currently in the mapping", async function () {
       const emptyApprover = await this.brokerageWalletContract.approvers(accounts[1]);
       assert.equal(emptyApprover, false);
 
-      await this.brokerageWalletContract.toggleApprover(accounts[1]);
+      await this.brokerageWalletContract.addApprover(accounts[1]);
       const newApprover = await this.brokerageWalletContract.approvers(accounts[1]);
       assert.equal(newApprover, true);
+
+      // Cleanup
+      await this.brokerageWalletContract.removeApprover(accounts[1]);
+    });
+
+    it("adds address to approverAddresses")
+    it("emits LogAddApprover event")
+
+    context("when called by non-owner", async function () {
+      it("raises an exception and does not add the approver", async function () {
+        await truffleAssert.fails(
+          this.brokerageWalletContract.addApprover.call(accounts[1], { from: accounts[1] })
+        );
+
+        const approver = await this.brokerageWalletContract.approvers(accounts[1]);
+        assert.equal(approver, false);
+      });
+    });
+  });
+
+  describe("removeApprover(address _approver)", () => {
+    beforeEach(async function() {
+      // Set up an approver to remove
+      await this.brokerageWalletContract.addApprover(accounts[1]);
     });
 
     it("removes approver if its already in the mapping", async function () {
-      const emptyApprover = await this.brokerageWalletContract.approvers(accounts[1]);
-      assert.equal(emptyApprover, true);
+      const approver = await this.brokerageWalletContract.approvers(accounts[1]);
+      assert.equal(approver, true);
 
-      await this.brokerageWalletContract.toggleApprover(accounts[1]);
+      await this.brokerageWalletContract.removeApprover(accounts[1]);
       const newApprover = await this.brokerageWalletContract.approvers(accounts[1]);
       assert.equal(newApprover, false);
     });
 
+    it("removes address to approverAddresses")
+    it("emits LogRemoveApprover event")
+
     context("when called by non-owner", async function () {
-      it("raises an exception and does not toggle the approver", async function () {
+      it("raises an exception and does not remove the approver", async function () {
         await truffleAssert.fails(
-          this.brokerageWalletContract.toggleApprover.call(accounts[1], { from: accounts[1] })
+          this.brokerageWalletContract.removeApprover.call(accounts[1], { from: accounts[1] })
         );
+
+        const approver = await this.brokerageWalletContract.approvers(accounts[1]);
+        assert.equal(approver, true);
       });
     });
   });
@@ -164,16 +227,4 @@ contract("BrokerageWallet", (accounts) => {
       });
     });
   })
-
-  describe("addApprover(address _address)", () => {
-    it("adds address to approvers and set to true")
-    it("adds address to approverAddresses")
-    it("emits LogAddApprover event")
-  });
-
-  describe("removeApprover(address _approver)", () => {
-    it("sets approver address to false")
-    it("removes address from approverAddresses")
-    it("emits LogRemoveApprover event")
-  });
 });

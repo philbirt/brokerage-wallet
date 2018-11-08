@@ -16,6 +16,7 @@ contract BrokerageWallet is Ownable {
         address token;
         uint256 amount;
         bool approved;
+        uint256 approvalCountIndex;
     }
 
     /** Contract administrator */
@@ -29,7 +30,9 @@ contract BrokerageWallet is Ownable {
     /** tokenAddress => investorAddress => balance */
     mapping(address => mapping(address => uint256)) public ledger;
 
+    /** approverAddress => withdrawalRequests */
     mapping(address => WithdrawalRequest[]) public approverRequests;
+    uint[] public requestApprovalCounts;
 
     /** logging deposit or their failure */
     event LogDeposit(address indexed _token, address indexed _investor, uint _amount);
@@ -73,11 +76,12 @@ contract BrokerageWallet is Ownable {
     * @param _token the ERC20 token address
     * @param _amount the desired amount of ERC20 to withdraw
     */
-    function withdraw(address _token, uint256 _amount) public {
-        // TODO: Another data structure to iterate over approvers
+    function requestWithdrawal(address _token, uint256 _amount) public {
+        uint256 approvalCountIndex = requestApprovalCounts.push(0) - 1;
+
         for (uint i = 0; i < approverAddresses.length; i++) {
             address approverAddress = approverAddresses[i];
-            WithdrawalRequest memory request = WithdrawalRequest(msg.sender, _token, _amount, false);
+            WithdrawalRequest memory request = WithdrawalRequest(msg.sender, _token, _amount, false, approvalCountIndex);
             approverRequests[approverAddress].push(request);
         }
     }
@@ -97,20 +101,13 @@ contract BrokerageWallet is Ownable {
 
         for (uint i = _begin; i < _end; i++) {
             WithdrawalRequest storage request = requests[i];
-            request.approved = true;
-        }
-    }
+            // TODO: skip if already approved by this approver
+            requestApprovalCounts[request.approvalCountIndex] += 1;
 
-    /**
-    * @dev Toggles an approver address to be active/inactive
-    *
-    * @param _approver the approver address to toggle
-    */
-    function toggleApprover(address _approver) public onlyOwner {
-        if (approvers[_approver]) {
-            approvers[_approver] = false;
-        } else {
-            approvers[_approver] = true;
+            if (requestApprovalCounts[request.approvalCountIndex] > APPROVAL_THRESHOLD) {
+                // TODO: Transfer tokens to investor
+                // TODO: Remove entry from requestApprovalCounts
+            }
         }
     }
 
