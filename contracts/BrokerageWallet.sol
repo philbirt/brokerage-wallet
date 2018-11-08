@@ -33,6 +33,8 @@ contract BrokerageWallet is Ownable {
     /** approverAddress => withdrawalRequests */
     mapping(address => WithdrawalRequest[]) public approverRequests;
     uint[] public requestApprovalCounts;
+    event LogApproverAdded(address indexed _approver);
+    event LogApproverRemoved(address indexed _approver);
 
     /** logging deposit or their failure */
     event LogDeposit(address indexed _token, address indexed _investor, uint _amount);
@@ -117,11 +119,15 @@ contract BrokerageWallet is Ownable {
     * @param _approver the approvers address
     */
     function addApprover(address _approver) public onlyOwner {
+        if (approvers[_approver]) return;
+
         uint currentLength = approverAddresses.length;
         approverAddresses.length = currentLength + 1;
         
         approverAddresses[currentLength] = _approver;
         approvers[_approver] = true;
+
+        emit LogApproverAdded(_approver);
     }
 
     /**
@@ -130,6 +136,8 @@ contract BrokerageWallet is Ownable {
     * @param _approver the approver address to remove
     */
     function removeApprover(address _approver) public onlyOwner {
+        if (!approvers[_approver]) return; 
+
         for (uint256 i = 0; i < approverAddresses.length; i++) {
             if (approverAddresses[i] == _approver) {
                 uint256 newLength = approverAddresses.length - 1;
@@ -137,6 +145,8 @@ contract BrokerageWallet is Ownable {
                 approvers[_approver] = false;
             
                 approverAddresses.length = newLength;
+
+                emit LogApproverRemoved(_approver);
                 break;
             }
         }

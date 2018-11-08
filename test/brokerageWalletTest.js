@@ -13,9 +13,9 @@ contract("BrokerageWallet", (accounts) => {
 
     this.erc20Token.transfer(this.investor, 1000);
 
-    this.approver1 = accounts[8];
-    this.approver2 = accounts[9];
-    this.approver3 = accounts[10];
+    this.approver1 = accounts[7];
+    this.approver2 = accounts[8];
+    this.approver3 = accounts[9];
 
     await this.brokerageWalletContract.addApprover(this.approver1);
     await this.brokerageWalletContract.addApprover(this.approver2);
@@ -27,7 +27,7 @@ contract("BrokerageWallet", (accounts) => {
       this.depositAmount = 100;
 
       // Set up token allowance for brokerage contract
-      await this.erc20Token.increaseAllowance(this.brokerageWalletContract.address, this.depositAmount, { from: this.investor });
+     await this.erc20Token.increaseAllowance(this.brokerageWalletContract.address, this.depositAmount, { from: this.investor });
     });
 
     it("credit the investors balance for the token", async function () {
@@ -136,20 +136,38 @@ contract("BrokerageWallet", (accounts) => {
   });
 
   describe("addApprover(address _approver)", () => {
-    it("adds approver if not currently in the mapping", async function () {
-      const emptyApprover = await this.brokerageWalletContract.approvers(accounts[1]);
-      assert.equal(emptyApprover, false);
+    context("approver successfully added", () => {
+      afterEach(async function () {
+        // Cleanup
+        await this.brokerageWalletContract.removeApprover(accounts[1]);
+      });
 
-      await this.brokerageWalletContract.addApprover(accounts[1]);
-      const newApprover = await this.brokerageWalletContract.approvers(accounts[1]);
-      assert.equal(newApprover, true);
+      it("adds approver if not currently in the mapping", async function () {
+        const emptyApprover = await this.brokerageWalletContract.approvers(accounts[1]);
+        assert.equal(emptyApprover, false);
 
-      // Cleanup
-      await this.brokerageWalletContract.removeApprover(accounts[1]);
+        await this.brokerageWalletContract.addApprover(accounts[1]);
+        const newApprover = await this.brokerageWalletContract.approvers(accounts[1]);
+        assert.equal(newApprover, true);
+      });
+
+      it("adds address to approverAddresses", async function () {
+        const emptyApprover = await this.brokerageWalletContract.approvers(accounts[1]);
+        assert.equal(emptyApprover, false);
+
+        await this.brokerageWalletContract.addApprover(accounts[1]);
+        const newApproverAddress = await this.brokerageWalletContract.approverAddresses(3);
+        assert.equal(newApproverAddress, accounts[1]);
+      });
+
+      it("emits LogAddApprover event", async function () {
+        this.brokerageWalletContract.addApprover(accounts[1]).then((result) => {
+          truffleAssert.eventEmitted(result, 'LogApproverAdded', (ev) => {
+            return ev._approver == accounts[1];
+          });
+        });
+      });
     });
-
-    it("adds address to approverAddresses")
-    it("emits LogAddApprover event")
 
     context("when called by non-owner", async function () {
       it("raises an exception and does not add the approver", async function () {
