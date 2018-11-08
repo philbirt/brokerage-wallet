@@ -99,20 +99,22 @@ contract BrokerageWallet is Ownable {
     * @param _end the ending index of requests to approve
     */
     function approveWithdrawals(uint256 _begin, uint256 _end) public onlyApprover {
-        WithdrawalRequest[] storage requests = approverRequests[msg.sender];
-
         for (uint i = _begin; i < _end; i++) {
-            WithdrawalRequest storage request = requests[i];
-            // TODO: skip if already approved by this approver
-            requestApprovalCounts[request.approvalCountIndex] += 1;
-
-            if (requestApprovalCounts[request.approvalCountIndex] > APPROVAL_THRESHOLD) {
-                // TODO: Transfer tokens to investor
-                // TODO: Remove entry from requestApprovalCounts
-            }
+            approveWithdraw(i);
         }
     }
 
+    function approveWithdraw(uint256 _index) public onlyApprover {
+        WithdrawalRequest storage request = approverRequests[msg.sender][_index];
+        // TODO: skip if already approved by this approver
+        requestApprovalCounts[request.approvalCountIndex] += 1;
+        request.approved = true;
+
+        if (requestApprovalCounts[request.approvalCountIndex] > APPROVAL_THRESHOLD) {
+            // TODO: Transfer tokens to investor
+            // TODO: Remove entry from requestApprovalCounts
+        }
+    }
     /**
     * @dev add approver address to the list
     *
