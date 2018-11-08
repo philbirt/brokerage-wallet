@@ -196,8 +196,34 @@ contract("BrokerageWallet", (accounts) => {
       assert.equal(newApprover, false);
     });
 
-    it("removes address to approverAddresses")
-    it("emits LogRemoveApprover event")
+    it("removes address to approverAddresses", async function (){
+      const approver = await this.brokerageWalletContract.approvers(accounts[1]);
+      assert.equal(approver, true);
+
+      await this.brokerageWalletContract.removeApprover(accounts[1]);
+
+      try {
+        let i = 0;
+        const approversLength = 4;
+        while(i < approversLength) {
+          const approver = await this.brokerageWalletContract.approverAddresses(i);
+          assert.notEqual(approver, accounts[1]);
+          i++;
+        }
+      } catch(e) {
+        // We expect to run out of addresses, this is here to capture the exception
+        assert.ok(true, "Iterated through addresses without a match");
+      }
+    });
+
+    it("emits LogRemoveApprover event", async function (){
+      await this.brokerageWalletContract.addApprover(accounts[1]);
+      this.brokerageWalletContract.removeApprover(accounts[1]).then((result) => {
+        truffleAssert.eventEmitted(result, 'LogApproverRemoved', (ev) => {
+          return ev._approver == accounts[1];
+        });
+      });
+    });
 
     context("when called by non-owner", async function () {
       it("raises an exception and does not remove the approver", async function () {
