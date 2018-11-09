@@ -94,7 +94,7 @@ contract BrokerageWallet is Ownable {
     function offerTokens(address _token, uint256 _amount) public {
         InvestorLedger storage investorLedger = ledger[_token][msg.sender];
         require(
-            (investorLedger.balance - investorLedger.offeredBalance) >= _amount,
+            investorLedger.balance.sub(investorLedger.offeredBalance) >= _amount,
             "Investor does not have sufficient balance of token"
         );
 
